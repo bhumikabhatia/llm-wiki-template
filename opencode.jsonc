@@ -9,6 +9,9 @@
   // agent if you want to (see the second reviewers below, where you really should).
   // Field names follow the opencode config schema this was written against; if your
   // opencode version rejects "permission"/"bash"/"task", see https://opencode.ai/docs/permissions/
+  //
+  // No MCP servers are configured here. Add the ones you have, then restrict each agent to
+  // the tools its job needs. See "Connecting your own tools" in .agents/README.md.
   "$schema": "https://opencode.ai/config.json",
   "permission": {
     "edit": "allow",

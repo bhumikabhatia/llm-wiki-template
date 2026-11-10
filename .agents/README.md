@@ -66,6 +66,35 @@ opencode.jsonc               Registers the agents and their permissions (repo ro
    "Affected Repositories" table and the orchestrator clones and branches them.
 5. Start the `orchestrator` agent and describe the requirement.
 
+## Connecting your own tools
+
+The template ships with no MCP servers or other integrations configured. The prompts say
+"use whichever are connected", so add the ones you actually have (ticket tracker, service
+catalog, docs search, logs) and the agents will use them.
+
+Then restrict each agent to what its job needs. MCP tools are named `<server>_<tool>`, and
+permission rules match on that name. The last matching rule wins, so put a broad deny first
+and the specific allows after it:
+
+```jsonc
+"agent": {
+  "pm": {
+    "permission": { "yourserver_*": "deny", "yourserver_read_thing": "allow" }
+  },
+  "developer": {
+    "permission": { "yourserver_*": "deny" }
+  }
+}
+```
+
+Values are `allow`, `deny` and `ask` (prompt the human before each call; a good fit for
+tools that write). A sensible starting point, matching the table above: the PM reads the
+ticket tracker; the Architect gets the catalog, docs search, tracker and logs; the Developer
+and Tester need none; the Reviewer needs GitHub only.
+
+Server configuration syntax differs between opencode versions, so follow
+<https://opencode.ai/docs/mcp-servers/> for yours.
+
 ## Things you will want to change
 
 - **Coverage target** (80%) and the **complexity rule** that selects the heavy or light
