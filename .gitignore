@@ -1,0 +1,7 @@
+.DS_Store
+.idea/
+*.swp
+# Obsidian: keep shared config (app/graph), ignore per-user state
+.obsidian/workspace.json
+.obsidian/workspaces.json
+.claude/settings.local.json

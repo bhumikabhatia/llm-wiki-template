@@ -1,0 +1,85 @@
+{
+  // Agent pipeline for opencode (https://opencode.ai). Prompts live in .agents/.
+  // Pipeline: PM -> Architect -> Developer -> Tester -> Reviewer -> PR -> sync-wiki.
+  // The Orchestrator is the only primary agent; it hands each specialist its input and
+  // asks the human for a yes at every gate. Specialists never talk to each other
+  // (the one exception: the Reviewer calls the second-opinion reviewer).
+  //
+  // Models are not set, so every agent uses whatever model you have selected. Set one per
+  // agent if you want to (see the second reviewers below, where you really should).
+  // Field names follow the opencode config schema this was written against; if your
+  // opencode version rejects "permission"/"bash"/"task", see https://opencode.ai/docs/permissions/
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "edit": "allow",
+    "write": "allow"
+  },
+  "agent": {
+    "orchestrator": {
+      "description": "Entry point for all feature work. Coordinates the full pipeline (PM, Architect, Developer, Tester, Reviewer, PR, wiki sync) and enforces a human approval gate between every stage. Use when starting a new feature or requirement.",
+      "mode": "primary",
+      "prompt": "{file:./.agents/orchestrator.md}",
+      "permission": {
+        // The orchestrator delegates; it never edits files itself. It does need git/gh
+        // to branch, open PRs and run the wiki sync (stages 3, 7 and 8).
+        "edit": "deny",
+        "bash": "allow",
+        "task": "allow"
+      }
+    },
+    "pm": {
+      "description": "Product specialist. Researches the wiki, grills requirements from a product perspective, and produces a structured product brief for the Architect.",
+      "mode": "subagent",
+      "prompt": "{file:./.agents/pm.md}",
+      "permission": { "edit": "deny", "bash": "deny" }
+    },
+    "architect": {
+      "description": "Design specialist. Researches the wiki and codebase, grills requirements, and produces an ADR. Use for architecture decisions and technical design.",
+      "mode": "subagent",
+      "prompt": "{file:./.agents/architect.md}"
+    },
+    "developer": {
+      "description": "Implementation specialist. Plans work as tasks.md, then executes the approved tasks in order. Does not design or write tests.",
+      "mode": "all",
+      "prompt": "{file:./.agents/developer.md}",
+      "permission": { "edit": "allow", "bash": "allow" }
+    },
+    "tester": {
+      "description": "Test specialist. Writes unit and integration tests for changed modules, runs the suite, and reports coverage. Does not modify application code.",
+      "mode": "subagent",
+      "prompt": "{file:./.agents/tester.md}",
+      "permission": { "edit": "allow", "bash": "allow" }
+    },
+    "reviewer": {
+      "description": "Code review specialist. Pipeline mode: verify the build and review the changed files. PR mode: fetch a PR, review it, post findings after approval. Always invokes a second-opinion reviewer.",
+      "mode": "subagent",
+      "prompt": "{file:./.agents/reviewer.md}",
+      "permission": {
+        "edit": "deny",
+        "bash": "allow",
+        "task": {
+          "*": "deny",
+          "second-reviewer-complex": "allow",
+          "second-reviewer-light": "allow"
+        }
+      }
+    },
+    "second-reviewer-complex": {
+      "description": "Second-opinion reviewer for complex changes (cross-service contracts, large diffs). Invoked by the reviewer.",
+      "mode": "subagent",
+      // Use a strong model from a DIFFERENT vendor than your main agents. Independent blind
+      // spots are the whole point. Replace the placeholder (format: provider/model).
+      "model": "REPLACE_WITH_PROVIDER/STRONG_MODEL",
+      "prompt": "{file:./.agents/second-reviewer.md}",
+      "permission": { "edit": "deny", "bash": "deny" }
+    },
+    "second-reviewer-light": {
+      "description": "Second-opinion reviewer for straightforward changes. Invoked by the reviewer.",
+      "mode": "subagent",
+      // A smaller, cheaper model from a different vendor. Replace the placeholder.
+      "model": "REPLACE_WITH_PROVIDER/SMALL_MODEL",
+      "prompt": "{file:./.agents/second-reviewer.md}",
+      "permission": { "edit": "deny", "bash": "deny" }
+    }
+  }
+}
