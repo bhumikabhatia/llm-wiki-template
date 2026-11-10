@@ -28,6 +28,17 @@ ticket -> PM -> yes -> Architect -> yes -> Developer -> yes -> Tester -> yes -> 
         orchestrator opens the PR on the final yes, then runs sync-wiki  (feedback into the wiki)
 ```
 
+**Rework loop.** If the build fails or the Reviewer returns `CHANGES REQUESTED`, the
+orchestrator does not open the PR. It shows you the findings, you choose which to fix, and
+it sends only those to the Developer (or to the Tester for a missing test). It then re-runs
+the Tester and the Reviewer. Maximum 2 rounds per stage, then it stops and asks you. A
+problem in the spec itself goes back to the Architect, not the Developer.
+
+```
+Reviewer: CHANGES REQUESTED -> you pick findings -> Developer fixes -> Tester -> Reviewer (re-review)
+                                  ^______________ at most 2 rounds, then ask the human ______________|
+```
+
 Two ideas carry the design:
 
 - **The ADR is the contract.** The Architect writes it, the Developer builds to it, and the
@@ -45,7 +56,7 @@ network or catalog access; only the Reviewer and Orchestrator touch GitHub.
   orchestrator.md            Drives the stages, enforces gates, opens the PR, triggers wiki sync
   pm.md                      Brief from a requirement
   architect.md               ADR from a brief
-  developer.md               tasks.md, then code (invoked twice: plan, implement)
+  developer.md               tasks.md, then code (invoked for: plan, implement, fix)
   tester.md                  Tests + coverage
   reviewer.md                Build verification + review; calls the second reviewer
   second-reviewer.md         Independent reviewer on a different vendor's model
@@ -97,7 +108,7 @@ Server configuration syntax differs between opencode versions, so follow
 
 ## Things you will want to change
 
-- **Coverage target** (80%): in `orchestrator.md`.
+- **Coverage target** (80%) and the **rework-round cap** (2): in `orchestrator.md`.
 - **Complexity rule** that selects the heavy or light second reviewer: in `reviewer.md`
   (Step 3.0). The Reviewer decides it itself, in both pipeline and PR mode.
 - **Branch and commit naming**: `<ticket-id>-<slug>` in `orchestrator.md`.
@@ -111,6 +122,7 @@ Server configuration syntax differs between opencode versions, so follow
 
 - Nothing is committed to the wiki, pushed, or opened as a PR without an explicit human yes.
 - Nothing force-pushes or merges.
+- Findings only reach the Developer after you choose them, and the loop is capped.
 - The Developer does not write tests and the Tester does not touch application code, so
   tests cannot be bent to fit a bug.
 - Findings from the second reviewer must quote the source; the first reviewer verifies any

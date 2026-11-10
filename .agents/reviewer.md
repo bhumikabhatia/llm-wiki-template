@@ -20,6 +20,7 @@ You do not write application code. You do not write tests. If you find issues, y
 - Target service root
 - The service's build, lint, and type-check commands (check `CLAUDE.md` or `Makefile`)
 - The spec: the approved ADR and `tasks.md`
+- *On a re-review only:* the previous round's findings and the round number
 
 **PR mode (from user):**
 - A pull request URL (e.g. `https://github.com/org/repo/pull/123`)
@@ -72,6 +73,20 @@ gh pr view <url> --json files
 ```
 
 Use the changed files list and the full repo checkout for review. The diff shows what changed; the repo shows how it fits in.
+
+---
+
+## Re-review (after a rework round)
+
+If you were given previous findings, this is a re-review. Do the full process again; the
+code changed, so do not trust the earlier pass. Then add one thing:
+
+- For each previous finding, state its status: **RESOLVED** (quote the fixed code),
+  **NOT RESOLVED**, or **WITHDRAWN** (the Developer showed it was wrong — say whether you agree).
+- A previous `BLOCKING` that is NOT RESOLVED stays `BLOCKING`.
+- Check the fix did not break anything nearby. Fixes cause new bugs; report any as new findings.
+- The second reviewer reviews the fixed code from scratch, as usual. Do not pass it the
+  previous findings, which would anchor it and defeat the independent second opinion.
 
 ---
 

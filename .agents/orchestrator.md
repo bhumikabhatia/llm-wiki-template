@@ -76,7 +76,7 @@ The Developer will produce a `tasks.md` in the target service directory. Present
 
 Instruct the **Developer** agent to work through `tasks.md` in order.
 
-The Developer reports back when all tasks are complete. Surface any blocking issues immediately.
+The Developer reports back when all tasks are complete. Surface any blocking issues immediately; if it reports failures, use the **Rework loop** below.
 
 **Gate**: confirm all tasks done and Developer reports no failures, then ask to proceed to Stage 5.
 
@@ -88,7 +88,7 @@ Hand off to the **Tester** agent with:
 - The list of changed files/modules from Stage 4
 - Coverage target: ≥80% per changed module
 
-The Tester writes and runs the test suite. Surface any failures immediately and wait for resolution.
+The Tester writes and runs the test suite. Surface any failures immediately. If it reports an implementation bug, use the **Rework loop** below.
 
 **Gate**: confirm tests pass and coverage target is met, then ask to proceed to Stage 6.
 
@@ -107,6 +107,8 @@ You do not assess complexity or pick a second reviewer. The Reviewer decides tha
 
 The Reviewer runs build verification and its own review, **decides how heavy a second opinion is needed and invokes the second-opinion reviewer itself** (via the Task tool), and reconciles both sets of findings. It returns the combined findings and verdict. You do not dispatch or reconcile reviewers yourself — relay the Reviewer's result (including its stated complexity decision) and surface any blocking findings immediately.
 
+If the build fails or the verdict is `CHANGES REQUESTED`, do not ask for the final yes. Use the **Rework loop** below, then return here.
+
 **Gate (the final yes)**: confirm build passes and combined review is clean, then ask:
 > "Ready to open the PR? (yes / no)"
 
@@ -120,7 +122,7 @@ For each affected repository:
 
 1. If changes are uncommitted, commit them. Stage only the files the Developer and Tester reported as changed — nothing else. Message: `<ticket-id>: <short summary>`.
 2. Push the feature branch.
-3. Open the PR against the base branch recorded in Stage 3. Title: `<ticket-id>: <short summary>`. Body: link to the ticket, the ADR slug, a short summary of the change, the test coverage result, and the Reviewer's verdict with any non-blocking items.
+3. Open the PR against the base branch recorded in Stage 3. Title: `<ticket-id>: <short summary>`. Body: link to the ticket, the ADR slug, a short summary of the change, the test coverage result, the Reviewer's verdict with any non-blocking items, and any `BLOCKING` finding the user chose to override (with their reason).
 
 Never force-push. Never merge. Report the PR URL(s) to the user.
 
@@ -146,9 +148,32 @@ Produce a final report:
 - PR URL(s), and the wiki PR URL (or "no wiki changes needed")
 - Summary of what was implemented
 - Test coverage delta
+- Rework rounds used, and any `BLOCKING` finding the user overrode
 - Any deferred items or open questions for follow-up
 
 Present to the user. No further gate — pipeline is complete.
+
+---
+
+## Rework loop
+
+Used when the Developer reports failures (Stage 4), the Tester reports an implementation bug (Stage 5), or the build fails or the Reviewer returns `CHANGES REQUESTED` (Stage 6). Nothing is fixed without the human choosing what to fix.
+
+1. **Present and choose.** Show the findings grouped by tag. Ask the user which to fix:
+   - `BLOCKING` must be fixed, unless the user explicitly overrides it. Record any override; it goes in the PR body.
+   - `SUGGESTION`, `q` and `nit` are the user's call.
+   - `DISPUTED BLOCKING` (the two reviewers disagree): the user decides.
+2. **Route each chosen item.**
+   - *Implementation defect* → the **Developer**.
+   - *Missing or weak test* → the **Tester**, not the Developer.
+   - *The spec or ADR itself is wrong or incomplete* → **stop**. Tell the user this needs an ADR amendment from the Architect before any code changes. Do not send it to the Developer.
+3. **Hand the Developer the fix.** Pass the chosen findings verbatim (Finding / File / Evidence / Tag), the path to `tasks.md`, and the ADR slug. The Developer appends a "Review fixes — round N" section to `tasks.md`, fixes only those items, and reports back.
+4. **Gate**: summarise what was fixed in one line, then ask:
+   > "Re-run tests and review? (yes / no)"
+5. **Re-verify, in order.** Tester first (the fix changed code, so re-run the full suite and coverage), then the Reviewer. Give the Reviewer the previous findings so it can confirm each is resolved, and the same inputs as Stage 6. Do not skip the Tester.
+6. **Loop or stop.** If the Reviewer is still not clean, repeat from step 1. **Maximum 2 rework rounds per stage.** If it is still not clean after the second, stop: list what remains, and ask the user how to proceed. Do not loop indefinitely.
+
+Keep the round count yourself. Report it in the completion report.
 
 ---
 
@@ -156,6 +181,8 @@ Present to the user. No further gate — pipeline is complete.
 
 - Never implement, design, or test anything yourself — delegate to the appropriate agent
 - Never proceed past a gate without explicit user approval
+- Never send findings to the Developer without the user choosing which to fix
+- Never exceed 2 rework rounds without asking the user
 - Never open a PR, push, or run the wiki sync before the final yes
 - Never force-push, and never merge a PR
 - If a specialist agent returns a blocking issue, do not paper over it — surface it and wait
