@@ -97,8 +97,9 @@ Server configuration syntax differs between opencode versions, so follow
 
 ## Things you will want to change
 
-- **Coverage target** (80%) and the **complexity rule** that selects the heavy or light
-  second reviewer: both are in `orchestrator.md`.
+- **Coverage target** (80%): in `orchestrator.md`.
+- **Complexity rule** that selects the heavy or light second reviewer: in `reviewer.md`
+  (Step 3.0). The Reviewer decides it itself, in both pipeline and PR mode.
 - **Branch and commit naming**: `<ticket-id>-<slug>` in `orchestrator.md`.
 - **Permissions**: the orchestrator may run shell (it needs git and `gh`) but cannot edit
   files. Tighten or loosen per agent in `opencode.jsonc`.

@@ -96,21 +96,16 @@ The Tester writes and runs the test suite. Surface any failures immediately and 
 
 ### Stage 6 — Review & Build Verification (delegate to Reviewer)
 
-Before invoking the Reviewer, assess complexity:
-
-- Flag as **complex** if any of the following are true:
-  - Changes touch cross-service API contracts or event schemas
-  - More than 5 files changed
-  - The ADR involved multiple options or significant tradeoffs
-- Otherwise flag as **simple**
-
 Hand off to the **Reviewer** agent with:
 - The branch name
+- The base branch recorded in Stage 3 (the Reviewer needs it to measure the change)
 - The list of changed files
 - The service's lint/type-check/build commands (check `CLAUDE.md` or `Makefile`)
-- The complexity flag: `complex` or `simple`
+- The approved ADR slug and `tasks.md` (the spec)
 
-The Reviewer runs build verification and its own review, **invokes the second-opinion reviewer itself** (via the Task tool), and reconciles both sets of findings. It returns the combined findings and verdict. You do not dispatch or reconcile reviewers yourself — relay the Reviewer's result and surface any blocking findings immediately.
+You do not assess complexity or pick a second reviewer. The Reviewer decides that itself.
+
+The Reviewer runs build verification and its own review, **decides how heavy a second opinion is needed and invokes the second-opinion reviewer itself** (via the Task tool), and reconciles both sets of findings. It returns the combined findings and verdict. You do not dispatch or reconcile reviewers yourself — relay the Reviewer's result (including its stated complexity decision) and surface any blocking findings immediately.
 
 **Gate (the final yes)**: confirm build passes and combined review is clean, then ask:
 > "Ready to open the PR? (yes / no)"
